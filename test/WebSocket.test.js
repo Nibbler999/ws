@@ -1550,6 +1550,26 @@ describe('WebSocket', function () {
 
       wss.on('connection', (ws) => ws.close(1013));
     });
+
+    it('consumes all data when the server tcp socket closed', function (done) {
+      const wss = new WebSocketServer({
+        port: ++port,
+        perMessageDeflate: { threshold: 0 }
+      }, () => {
+        const ws = new WebSocket(`ws://localhost:${port}`);
+
+        wss.on('connection', (conn) => {
+          conn.send('foo', () => {
+            conn._socket.destroy();
+          });
+        });
+        ws.on('message', (message) => {
+          ws.on('close', () => {
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('W3C API emulation', function () {
